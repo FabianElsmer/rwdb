@@ -346,7 +346,7 @@ class Document(DocumentBase):
         """Save entry in collection (updates or creates)
 
         returns Future"""
-        ret = yield self.get_collection().insert(self)
+        ret = yield self.get_collection().insert_one(self)
         # creating a new entry without an _id MongoDB will
         # generate an id in ObjectId format.
         if not '_id' in self and isinstance(ret, bson.ObjectId):
@@ -359,14 +359,14 @@ class Document(DocumentBase):
 
         returns Future"""
         if upsert and '_id' not in self:
-            ret = yield self.get_collection().insert(self)
+            ret = yield self.get_collection().insert_one(self)
         else:
-            ret = yield self.get_collection().update({'_id': self['_id']}, self, upsert=upsert)
+            ret = yield self.get_collection().update_one({'_id': self['_id']}, self, upsert=upsert)
         raise gen.Return(ret)
 
     @gen.coroutine
     def remove(self):
-        ret = yield self.get_collection().remove({'_id': self['_id']})
+        ret = yield self.get_collection().delete_one({'_id': self['_id']})
         raise gen.Return(ret)
 
     @classmethod
@@ -510,7 +510,7 @@ def init(scope, settings):
     }
     scope['rwdb:clients'] = clients
     scope['rwdb:databases'] = databases
-    scope.setdefault('rw.routing:converters', {}).update({
+    scope.setdefault('rw.routing:converters', {}).update_one({
         'ObjectId': routing_converter_object_id
     })
 
