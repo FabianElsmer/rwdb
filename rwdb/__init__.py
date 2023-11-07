@@ -153,7 +153,13 @@ class Query(object):
     @gen.coroutine
     def count(self):
         col = self.get_collection()
-        ret = yield col.find(self._filters, sort=self._sort, skip=self._skip, limit=self._limit).count()
+        kwargs = {
+            'skip': self._skip,
+        }
+
+        if self._limit:
+            kwargs['limit'] = self._limit
+        ret = yield col.count_documents(self._filters, **kwargs)
         raise gen.Return(ret)
 
     @gen.coroutine
@@ -361,7 +367,7 @@ class Document(DocumentBase):
         if upsert and '_id' not in self:
             ret = yield self.get_collection().insert_one(self)
         else:
-            ret = yield self.get_collection().update_one({'_id': self['_id']}, self, upsert=upsert)
+            ret = yield self.get_collection().update_one({'_id': self['_id']}, {'$set': self}, upsert=upsert)
         raise gen.Return(ret)
 
     @gen.coroutine
@@ -510,7 +516,7 @@ def init(scope, settings):
     }
     scope['rwdb:clients'] = clients
     scope['rwdb:databases'] = databases
-    scope.setdefault('rw.routing:converters', {}).update_one({
+    scope.setdefault('rw.routing:converters', {}).update({
         'ObjectId': routing_converter_object_id
     })
 
