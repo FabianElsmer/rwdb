@@ -464,10 +464,12 @@ def connect(cfg):
         args['host'] = cfg.get('host', 'localhost')
         args['port'] = int(cfg.get('port', 27017))
 
+    if cfg.get('user'):
+        args['username'] = cfg['user']
+        args['password'] = cfg['password']
+
     client = MotorClient(**args)
 
-    if cfg.get('user'):
-        yield client[cfg['db']].authenticate(cfg['user'], cfg['password'])
     if cfg.get('read_preference'):
         read_preference = cfg['read_preference'].upper()
         client.read_preference = getattr(pymongo.read_preferences.ReadPreference, read_preference)
